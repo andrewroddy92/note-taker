@@ -1,9 +1,13 @@
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const db = require('./db/db.json');
 
 const app = express();
 const PORT = 3001;
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static('public'));
 
@@ -17,26 +21,43 @@ app.get('/notes', (req, res) =>
 
 app.get('/api/notes', (req, res) => res.json(db));
 
-app.post('/api/notes', (req, res) =>
-  //Step 1: Tell the console you got the request
+app.post('/api/notes', (req, res) =>{
 
-  //Step 2: Deconstruct the request into variables
+    console.info(`${req.method} request received to add a note`);
 
-  //Step 3: Use if statement to check that variables are there
+    const { title, text } = req.body;
 
-    // Step 3A: Create a json object represent the notes
+    if (title && text) {    
 
-    // Step 3B: Add obj from 3B to "db" json array
+        const newNote = {
+            title,
+            text,
+        };
 
-    // Step 3C: Use fs to write new "db" json to db.json file (overwriting what was there)
+        db.push(newNote);
+        const noteString = JSON.stringify(db);
 
-    // Step 3D: Create response obj for client
+        fs.writeFile('./db/db.json', noteString,(err) =>
+        err
+          ? console.error(err)
+          : console.log(
+              `New Note has been saved!`
+            )
+        )
 
-    // Step 3E: respond to client with status code and response obj
+        const response = {
+            status: 'success',
+            body: newNote,
+        };
 
-  //Step 4: If some of the variables werent there, return error response code and obj
-  
-);
+        console.log(response);
+    res.status(201).json(response);
+  } else {
+    res.status(500).json('error in saving Note');
+  }
+
+
+});
 
 app.listen(PORT, () =>
   console.log(`Note taker listening at http://localhost:${PORT}`)
